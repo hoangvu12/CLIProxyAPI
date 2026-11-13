@@ -175,7 +175,14 @@ access:
 
 # Routing strategy for selecting credentials when multiple match.
 routing:
-  strategy: "round-robin" # round-robin (default), weighted-round-robin, fill-first
+  strategy: "round-robin" # round-robin (default), weighted-round-robin, fill-first, soonest-reset
+  # soonest-reset prefers the Claude credential whose 7-day quota window resets soonest
+  # (then the earlier 5-hour reset, then round-robin), using the Anthropic unified
+  # rate-limit headers observed on each credential's latest response. Credentials whose
+  # 5h or 7d window is rejected or fully utilized are skipped until that window resets.
+  # Credentials with no observed reset data rank last, but each one is probed at most
+  # every 10 minutes so its windows are learned. Like priority, it decides only cold
+  # session-affinity bindings, requests without a session, and failover rebinding.
   # weighted-round-robin uses each credential's integer weight (default 1, maximum 1,000,000).
   # Non-positive weights exclude the credential while this strategy is active.
   # Sticky requests (including inherited and LCP bindings) also consume weighted credits
